@@ -2,9 +2,9 @@ class Connection {
     constructor(io, connectionName) {
         this.io = io;
         this.connectionName = connectionName;
-        this.server = this.io.of('/' + connectionName);
+        this.nsp = this.io.of('/' + connectionName);
         this.clients = {};
-        this.server.on('connection', (socket) => {
+        this.nsp.on('connection', (socket) => {
             let onevent = socket.onevent;
             socket.onevent = function (packet) {
                 console.log("SocketApp '" + connectionName + "' received: " + JSON.stringify(packet.data) + ' from ' + socket.id);

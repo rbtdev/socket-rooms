@@ -1,10 +1,33 @@
 const Connection = require('../connection');
 const Room = require('../room');
 
-class Rooms extends Connection {
+class Rooms {
+    constructor(nsp) {
+        this.nsp = nsp;
+        this.rooms = []
+        this.nextId = 0;
+    }
+
+    add() {
+        let room = new Room(this.nsp, this.nextId++);
+        this.rooms.push(room);
+        return room
+    }
+
+    list() {
+        return this.rooms.map((room) => {
+            return {
+                id: room.id,
+                members: room.members()
+            };
+        })
+    }
+}
+class App extends Connection {
     constructor(nsp, connectionName) {
         super(nsp, connectionName);
-        this.room = new Room (this.nsp, 'room-1');
+        this.rooms = new Rooms(this.nsp);
+        this.room = this.rooms.add();
         this.users = [];
     }
 
@@ -13,12 +36,9 @@ class Rooms extends Connection {
         this.room.add(socket, (err) => {
             socket.on('signin', (username) => {
                 _this.clients[socket.id].username = username;
-                socket.emit('message', 'private message')
-                _this.room.emit('user-list', _this.userList());
-
-                if (_this.userList().length === 2) {
-                    this.room.on('answer', _this.checkAnswer.bind(_this));
-                }
+                //socket.emit('message', 'private message')
+                socket.emit('room-list', _this.roomList());
+                this.room.on('answer', _this.checkAnswer.bind(_this));
             })
         });
 
@@ -28,18 +48,25 @@ class Rooms extends Connection {
         })
     }
 
-    checkAnswer (socket, answer) {
+    checkAnswer(socket, answer) {
         console.log('Recieved: "' + answer + '" from socket ' + socket.id);
-        socket.emit('right');
+        //this.room.emit('message', socket.id + ' answered')
     }
 
-    userList () {
-        let userList = Object.keys(this.clients).map((client) => {
-            return client.username;
+    roomList() {
+        let _this = this;
+        return this.rooms.list().map((room) => {
+            return {
+                name: room.id,
+                users: room.members.map((member) => {
+                    return {
+                        username: _this.clients[member].username
+                    }
+                })
+            }
         })
-        return userList;
     }
 }
 
 
-module.exports = Rooms;
+module.exports = App;

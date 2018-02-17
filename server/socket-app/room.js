@@ -37,8 +37,16 @@ class Room {
         });
     }
 
-    emit (message, data) {
-        this.room.emit(message, data);
+    emit (event, data) {
+        let message = {
+            data: data,
+            room: this.id
+        };
+        this.room.emit(event, message);
+    }
+
+    members () {
+        return Object.keys(this.room.sockets);
     }
 }
 

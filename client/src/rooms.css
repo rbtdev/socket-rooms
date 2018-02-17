@@ -1,0 +1,63 @@
+.room-list {
+}
+
+.room-name {
+    margin:2px;
+    text-align: left;
+    font-weight: bold;
+    text-transform: uppercase;
+    width: 100px;
+}
+.room-name.active {
+    background-color: #dddddd;
+}
+
+.chat {
+    box-sizing: border-box;
+    border: 1px solid gray;
+    width: 100%;
+    text-align: left;
+}
+
+.room {
+    right: 0px;
+    text-align: left;
+    height: 600px;
+    overflow-y: auto;
+    border-bottom: 1px solid gray;
+
+}
+
+.room-title {
+
+}
+
+.side-bar {
+    float: left;
+    height: 600px;
+    border-right: 1px solid gray;
+    border-bottom: 1px solid gray;
+    text-align: left;
+    overflow-y: auto;
+}
+.member-list {
+    
+}
+
+.input-box {
+    clear: both;
+    padding: 5px;
+    padding-right: 100px
+}
+
+.input-box .input {
+    padding: 5px;
+    width: 100%;
+    max-width: 500px;    
+}
+
+.input-box .send {
+    margin-left: 10px;
+    padding: 5px;
+    width: 50px;
+}

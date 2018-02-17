@@ -1,35 +1,92 @@
 import React, { Component } from 'react';
+import update from 'immutability-helper';
 import io from 'socket.io-client';
 import './rooms.css';
 
+class Room extends Component {
+    constructor(props) {
+        super(props);
+        this.members = props.members;
+        this.messages = props.messages;
+        this.state = {
+            messages: this.messages,
+            members: this.members
+        }
+    }
+    componentWillReceiveProps(nextProps) {
+        this.setState({
+            messages: nextProps.messages,
+            members: nextProps.members
+        });
+    }
+
+    setMembers(members) {
+        this.setState({ members: members });
+    }
+
+    setMessages(messages) {
+        this.setState({ messages: messages })
+    }
+
+    scrollToBottom() {
+        this.messagesEnd.scrollIntoView({ behavior: "smooth" });
+    }
+
+    componentDidMount() {
+        this.scrollToBottom();
+    }
+
+    componentDidUpdate() {
+        this.scrollToBottom();
+    }
+    renderMessages() {
+        let messages = this.state.messages.map((message, index) => {
+            return (
+                <div className='message' key={index}>
+                    <div className='message-content'>
+                        {message.data.message}
+                    </div>
+                    <div className='message-sender'>
+                        {message.data.sender}
+                    </div>
+                </div>
+            )
+        })
+        let messageList =
+            <div className='message-list'>
+                {messages}
+                <div style={{ float:"left", clear: "both" }} ref={(el) => { this.messagesEnd = el; }}></div>
+            </div>
+        return messageList;
+    }
+
+    render() {
+        return (
+            <div className='room'>
+                {this.renderMessages()}
+            </div>)
+    }
+
+}
 class Rooms extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            rooms: [],
-            messages: []
+            rooms: [{
+                name: 'general',
+                members: [],
+                messages: []
+            }],
+            activeRoom: 'general'
         }
         this.username = props.username;
-        this.messages = [];
-        this.socket = io('/rooms');
+        this.socket = io('/chat');
         this.socket.on('connect', () => {
-            this.socket.on('message', (message) => {
-                this.setState({
-                    messages: this.messages.push(message)
-                });
-            });
-
-            this.socket.on('room-list', (roomList) => {
-                this.setState({
-                    rooms: roomList
-                })
-            })
-
+            this.socket.on('message', this.newMessage.bind(this));
+            this.socket.on('room-list', this.listRooms.bind(this));
             this.socket.emit('signin', this.username);
-
-            setTimeout(() => {
-                this.socket.emit('answer', 'this is an answer');
-            }, 1000)
+            this.socket.on('join', this.joinRoom.bind(this));
+            this.socket.emit('join', 'software');
         });
 
         this.socket.on('disconnect', () => {
@@ -37,50 +94,128 @@ class Rooms extends Component {
         })
     }
 
-    messageBlock() {
-        let messageBlock = this.messages.map((message, index) => {
-            let messageElement;
-            if (message.room !== undefined) {
-                messageElement = <div className='message'>
-                    <span key={index}>Room:{message.room} - '{message.data}'</span>
-                </div>
-            } else {
-                messageElement = <div className='message'>
-                    <span key={index}>Private Message - '{message}'</span>
-                </div>
-            }
-            return messageElement
+    listRooms(roomList) {
+        this.setState({
+            rooms: roomList
         })
-        return messageBlock;
     }
 
-    roomList() {
-        let rooms = this.state.rooms.map((room) => {
-            let userList = room.users.map((user) => {
-                return <li className='username'>{user.username}</li>
-            });
-            let roomElement =
-                <div className='room'>
-                    <div className='room-name'>{room.name}</div>
-                    <div>
-                        <ul className='userlist'>{userList}</ul>
-                    </div>
-                </div>
-            return roomElement;
+    joinRoom(roomName) {
+        let rooms = this.state.rooms;
+        let room = rooms.find((_room) => {
+            return (roomName = _room.name);
+        })
+        if (!room) {
+            room = {
+                name: room,
+                messages: [],
+                members: []
+            }
+            rooms.push(room);
+        }
+        this.setState({
+            activeRoom: room.name,
+            rooms: rooms
+        })
+    }
+
+    newMessage(data) {
+        let roomName = data.room;
+        let roomIndex = this.state.rooms.findIndex(room => room.name === roomName);
+        this.setState({
+            rooms: update(this.state.rooms, { [roomIndex]: { 'messages': { $push: [data] } } })
+        })
+    }
+
+    setActiveRoom (e) {
+        let room = e.target.textContent;
+        this.setState({
+            activeRoom: room
+        })
+    }
+    sendMessage() {
+        if (this.state.inputMessage) {
+            this.socket.emit('message', {
+                room: this.state.activeRoom,
+                message: this.state.inputMessage + ' [' + this.state.activeRoom + ']'
+            })
+            this.setState({
+                inputMessage: ''
+            })
+        }
+    }
+
+    inputKeyPress(e) {
+        if (e.key === 'Enter') {
+            this.sendMessage();
+        }
+    }
+
+    inputChange(e) {
+        this.setState({
+            inputMessage: e.target.value
+        })
+    }
+
+    renderActiveRoom() {
+        let room = this.state.rooms.find(_room => {
+            return (_room.name === this.state.activeRoom);
         });
-        let roomList = 
-                {rooms}
-        return roomsList;
+
+        return (
+            <div>
+                <Room name={room.name} messages={room.messages} members={room.members} />
+            </div>
+        )
+    }
+
+    renderRoomNames() {
+        let _this = this;
+        let roomNames = _this.state.rooms.map((room, index) => {
+            let nameClass = 'room-name';
+            if (_this.state.activeRoom === room.name) nameClass += ' active';
+            return (<div className={nameClass} onClick = {this.setActiveRoom.bind(this)}>{room.name}</div>);
+        });
+
+        return (
+            <div className='room-list'>
+                {roomNames}
+            </div>
+        )
+    }
+
+
+    renderMemberNames() {
+        let _this = this;
+        let activeRoom = _this.state.rooms.find(_room => {
+            return (_room.name === _this.state.activeRoom)
+        })
+        let members = activeRoom.members.map((member, index) => {
+            return (<div className='member-name'>{member.username}</div>);
+        });
+        return (
+            <div className='member-list'>
+                {members}
+            </div>
+        )
     }
 
     render() {
         return (
-            <div>
-                <div className = 'room-list'>
-                    {this.roomList()}
+            <div className='chat'>
+                <div className='side-bar'>
+                    {this.renderRoomNames()}
+                    {this.renderMemberNames()}
                 </div>
-                <div className = 'message-list'>
-                    {this.messageBlock()}
+                <div>
+                    {this.renderActiveRoom()}
+                </div>
+                <div className='input-box'>
+                    <input className='input' type='text'
+                        onKeyPress={this.inputKeyPress.bind(this)}
+                        onChange={this.inputChange.bind(this)}
+                        value={this.state.inputMessage}></input>
+                    <button className='send' onClick={this.sendMessage.bind(this)}>Send</button>
                 </div>
             </div>
         )

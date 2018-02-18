@@ -66,7 +66,7 @@ class Room extends Component {
     render() {
         return (
             <div>
-                <div className = 'room-title'>{this.props.name}</div>
+                <div className='room-title'>{this.props.name}</div>
                 {this.renderMessages()}
             </div>)
     }
@@ -79,13 +79,20 @@ class Rooms extends Component {
             rooms: [],
             activeRoom: ''
         }
-        this.username = props.username;
+        this.credentials = {
+            username: props.username,
+            password: props.password
+        }
         this.socket = io('/chat');
         this.socket.on('connect', () => {
+            this.socket.emit('signin', this.credentials);
+            this.socket.on('signin', this.setUser.bind(this))
             this.socket.on('message', this.newMessage.bind(this));
-            this.socket.on('room-list', this.listRooms.bind(this));
-            this.socket.emit('signin', this.username);
-            this.socket.on('join', this.joinRoom.bind(this));
+            this.socket.on('room-list', this.setRooms.bind(this));
+            this.socket.on('message-list', this.setMessages.bind(this));
+            this.socket.on('member-list', this.setMembers.bind(this));
+            this.socket.on('joined', this.joinedRoom.bind(this));
+            this.socket.on('left', this.leftRoom.bind(this));
         });
 
         this.socket.on('disconnect', () => {
@@ -93,29 +100,62 @@ class Rooms extends Component {
         })
     }
 
-    listRooms(roomList) {
-        this.setState({
-            rooms: roomList
-        })
+    setUser(user) {
+        if (user) {
+            this.setState({
+                user: user
+            });
+            this.socket.emit('list-rooms');
+        } else {
+            this.setState({
+                unauthorized: true
+            })
+        }
+        this.socket.emit('list-rooms');
     }
 
-    joinRoom(roomName) {
-        let rooms = this.state.rooms;
-        let room = rooms.find((_room) => {
-            return (roomName = _room.name);
-        })
-        if (!room) {
-            room = {
-                name: room,
+    setRooms(roomList) {
+        let rooms = roomList.map((roomName) => {
+            return {
+                name: roomName,
                 messages: [],
                 members: []
             }
-            rooms.push(room);
-        }
+        })
         this.setState({
-            activeRoom: room.name,
             rooms: rooms
         })
+        roomList.forEach((roomName) => {
+            this.socket.emit('join-room', roomName);
+        })
+    }
+
+    setMembers(data) {
+        let roomName = data.room;
+        let roomIndex = this.state.rooms.findIndex(room => room.name === roomName);
+        if (roomIndex >= 0) {
+            this.setState({
+                rooms: update(this.state.rooms, { [roomIndex]: { 'members': { $set: data.members } } })
+            })
+        }
+    }
+
+    setMessages(data) {
+        let roomName = data.room;
+        let roomIndex = this.state.rooms.findIndex(room => room.name === roomName);
+        if (roomIndex >= 0) {
+            this.setState({
+                rooms: update(this.state.rooms, { [roomIndex]: { 'messages': { $set: data.messages } } })
+            })
+        }
+    }
+
+    joinedRoom (data) {
+        this.socket.emit('list-members', data.room);
+    }
+
+    leftRoom (data) {
+        this.socket.emit('list-users', data.room);
     }
 
     newMessage(data) {
@@ -128,6 +168,8 @@ class Rooms extends Component {
 
     setActiveRoom(e) {
         let room = e.target.textContent;
+        this.socket.emit('list-members', room);
+        this.socket.emit('list-messages', room);
         this.setState({
             activeRoom: room
         })

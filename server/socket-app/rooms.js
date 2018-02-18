@@ -1,4 +1,6 @@
 
+const async = require('async');
+
 class Room {
     constructor(nsp, name) {
         this.nsp = nsp;
@@ -9,14 +11,12 @@ class Room {
 
     join(socket, cb) {
         socket.join(this.name, () => {
-            socket.emit('join', this.name);
             cb();
         });
     }
 
     leave(socket, cb) {
         socket.leave(this.name, () => {
-            socket.emit('leave', this.name);
             cb();
         });
     }
@@ -44,7 +44,7 @@ class Room {
             data: data,
             room: this.name
         };
-        this.messages.push(message);
+        if (event === 'message') this.messages.push(message);
         this.room.emit(event, message);
     }
 
@@ -52,11 +52,11 @@ class Room {
         return Object.keys(this.room.sockets);
     }
 
-    get messages () {
+    get messages() {
         return this._messages;
     }
 
-    set messages (value) {
+    set messages(value) {
         this._messages = value;
     }
 }
@@ -65,6 +65,7 @@ class Rooms {
     constructor(nsp) {
         this.nsp = nsp;
         this.rooms = []
+        this.joined = {};
     }
 
     add(nameList) {
@@ -90,6 +91,33 @@ class Rooms {
                 messages: room.messages
             };
         })
+    }
+
+    join(socket, roomName, cb) {
+        let room = this.room(roomName) || this.add(roomName);
+        this.joined[socket.id] = this.joined[socket.id] || {};
+        this.joined[socket.id][roomName] = room;
+        room.join(socket, () => {
+            cb (room)
+        });
+    }
+
+    leave(socket, roomName, cb) {
+        let _this = this;
+        if (roomName === null) {
+            let joinedRooms = Object.keys(this.joined[socket.id]);
+            async.map(joinedRooms, _this.leave.bind(_this, socket), (err, rooms) => {
+                cb(rooms);
+            });
+        } else {
+            let room = this.room(roomName);
+            if (room) {
+                delete this.joined[socket.id][roomName];
+                room.leave(socket, () => {
+                    cb(null, room)
+                });
+            }
+        }
     }
 }
 

@@ -155,7 +155,7 @@ class Rooms extends Component {
     }
 
     leftRoom (data) {
-        this.socket.emit('list-users', data.room);
+        this.socket.emit('list-members', data.room);
     }
 
     newMessage(data) {

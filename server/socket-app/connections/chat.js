@@ -47,7 +47,10 @@ class Chat extends Connection {
             let username = _this.clients[socket.id].username;
             this.rooms.leave(socket, null, (rooms) => {
                 rooms.forEach((room) => {
-                    room.emit('left', username);
+                    room.emit('left', {
+                        room: room.name,
+                        username:username
+                    });
                     delete _this.clients[socket.id];
                 })
             })
@@ -68,7 +71,8 @@ class Chat extends Connection {
             let members = _this.getRoomMembers(roomName);
             if (members !== null) {
                 room.emit('joined', {
-                    username: _this.clients[socket.id].username
+                    username: _this.clients[socket.id].username,
+                    room: roomName
                 });
             }
         });
@@ -119,7 +123,7 @@ class Chat extends Connection {
                 sender: this.clients[socket.id].username
             }
             this.saveMessage(data.room, message, (err, message) => {
-                if (err) return console.log ('error saving message ' + JSON.stringify(err));
+                if (err) return console.log('error saving message ' + JSON.stringify(err));
                 room.emit('new-message', message);
             })
         } else {
@@ -130,7 +134,7 @@ class Chat extends Connection {
 
     // this will save the message in a db and send the saved message with
     // an id and timestamp back to the callback
-    saveMessage (room, message, cb) {
+    saveMessage(room, message, cb) {
         let _this = this;
         setTimeout(() => {
             message.timestamp = new Date().getTime();
@@ -148,7 +152,7 @@ class Chat extends Connection {
             let messages = _this.messages.filter(message => {
                 return message.room === room;
             })
-            cb (null, messages);
+            cb(null, messages);
         }, 100)
     }
 }

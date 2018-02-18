@@ -88,17 +88,17 @@
 }
 
 .message {
-    width: 80%;
+    max-width: 80%;
     margin-top: 10px;
     margin-bottom: 10px;
     float: left;
-    background-color: lightgray;
+    background-color: rgb(168, 202, 221);
     border-radius: 3px;
     padding: 10px
 }
 .message.owner {
     float: right;
-    background-color: gray;
+    background-color: #84b67e;
 }
 
 .message-sender {

@@ -79,10 +79,13 @@ class Rooms extends Component {
             rooms: [],
             activeRoom: ''
         }
+        
         this.credentials = {
             username: props.username,
             password: props.password
         }
+
+        this.username = props.username;
         this.socket = io('/chat');
         this.socket.on('connect', () => {
             this.socket.emit('signin', this.credentials);

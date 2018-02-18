@@ -10,7 +10,7 @@
     "heroku": "npm run build-client && npm run cp-client && npm run push-heroku",
     "build-client": "cd client && npm run build",
     "cp-client": "rm -rf ./server/public/* && cp -r ./client/build/* ./server/public/",
-    "push-heroku": "git commit -m \"deploy to heroku\" && git push heroku master"
+    "push-heroku": "git add -A && git commit -m \"deploy to heroku\" && git push heroku master"
   },
   "repository": {
     "type": "git",

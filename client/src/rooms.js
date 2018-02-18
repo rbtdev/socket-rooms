@@ -6,6 +6,7 @@ import './rooms.css';
 class Room extends Component {
     constructor(props) {
         super(props);
+        this.username = props.username;
         this.members = props.members;
         this.messages = props.messages;
         this.state = {
@@ -41,13 +42,15 @@ class Room extends Component {
     }
     renderMessages() {
         let messages = this.state.messages.map((message, index) => {
+            let messageClass = 'message';
+            if (message.data.sender === this.username) messageClass += ' owner';
             return (
-                <div className='message' key={index}>
-                    <div className='message-content'>
-                        {message.data.message}
-                    </div>
+                <div className={messageClass} key={index}>
                     <div className='message-sender'>
                         {message.data.sender}
+                    </div>
+                    <div className='message-content'>
+                        {message.data.message}
                     </div>
                 </div>
             )
@@ -55,14 +58,14 @@ class Room extends Component {
         let messageList =
             <div className='message-list'>
                 {messages}
-                <div style={{ float:"left", clear: "both" }} ref={(el) => { this.messagesEnd = el; }}></div>
+                <div style={{ float: "left", clear: "both" }} ref={(el) => { this.messagesEnd = el; }}></div>
             </div>
         return messageList;
     }
 
     render() {
         return (
-            <div className='room'>
+            <div>
                 {this.renderMessages()}
             </div>)
     }
@@ -86,7 +89,6 @@ class Rooms extends Component {
             this.socket.on('room-list', this.listRooms.bind(this));
             this.socket.emit('signin', this.username);
             this.socket.on('join', this.joinRoom.bind(this));
-            this.socket.emit('join', 'software');
         });
 
         this.socket.on('disconnect', () => {
@@ -127,7 +129,7 @@ class Rooms extends Component {
         })
     }
 
-    setActiveRoom (e) {
+    setActiveRoom(e) {
         let room = e.target.textContent;
         this.setState({
             activeRoom: room
@@ -137,7 +139,7 @@ class Rooms extends Component {
         if (this.state.inputMessage) {
             this.socket.emit('message', {
                 room: this.state.activeRoom,
-                message: this.state.inputMessage + ' [' + this.state.activeRoom + ']'
+                message: this.state.inputMessage
             })
             this.setState({
                 inputMessage: ''
@@ -164,8 +166,9 @@ class Rooms extends Component {
 
         return (
             <div>
-                <Room name={room.name} messages={room.messages} members={room.members} />
+                <Room username={this.username} name={room.name} messages={room.messages} members={room.members} />
             </div>
+
         )
     }
 
@@ -174,11 +177,12 @@ class Rooms extends Component {
         let roomNames = _this.state.rooms.map((room, index) => {
             let nameClass = 'room-name';
             if (_this.state.activeRoom === room.name) nameClass += ' active';
-            return (<div className={nameClass} onClick = {this.setActiveRoom.bind(this)}>{room.name}</div>);
+            return (<div className={nameClass} onClick={this.setActiveRoom.bind(this)}>{room.name}</div>);
         });
 
         return (
             <div className='room-list'>
+                <div className='room-list-title'>Rooms</div>
                 {roomNames}
             </div>
         )
@@ -195,6 +199,7 @@ class Rooms extends Component {
         });
         return (
             <div className='member-list'>
+                <div className='member-list-title'>All Users</div>
                 {members}
             </div>
         )
@@ -207,7 +212,7 @@ class Rooms extends Component {
                     {this.renderRoomNames()}
                     {this.renderMemberNames()}
                 </div>
-                <div>
+                <div className='room'>
                     {this.renderActiveRoom()}
                 </div>
                 <div className='input-box'>

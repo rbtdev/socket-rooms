@@ -1,5 +1,6 @@
 const Connection = require('../connection');
 const Rooms = require('../rooms');
+const async = require('async');
 
 
 class Chat extends Connection {
@@ -7,20 +8,25 @@ class Chat extends Connection {
         super(nsp, connectionName);
         this.rooms = new Rooms(this.nsp);
         this.defaultRoom = 'general';
-        this.rooms.add(this.defaultRoom);
+        this.defaultRooms = [this.defaultRoom, 'software', 'react', 'ingress', 'dev-ops']
+        this.rooms.add(this.defaultRooms);
         this.users = [];
     }
 
     onConnect(socket) {
         var _this = this;
-        this.rooms.room(this.defaultRoom).join(socket, (err) => {
+        let joinRooms = this.defaultRooms.map(roomName => {
+            let room = this.rooms.room(roomName);
+            return room.join.bind(room);
+        })
+        async.applyEach(joinRooms, socket, (err) => {
             socket.on('signin', (username) => {
                 _this.clients[socket.id].username = username;
                 socket.emit('room-list', _this.roomList());
                 socket.on('message', _this.newMessage.bind(_this, socket));
                 socket.on('join', this.join.bind(_this, socket));
             })
-        });
+        })
 
         socket.on('disconnect', () => {
             console.log('socket disconnected');
@@ -36,6 +42,7 @@ class Chat extends Connection {
             socket.emit('room-list', this.roomList())
         });
     }
+
     newMessage(socket, data) {
         if (socket.rooms[data.room]) {
             this.rooms.room(data.room).emit('message', {

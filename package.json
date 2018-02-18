@@ -6,7 +6,11 @@
   "scripts": {
     "preinstall": "cd server && npm install",
     "start": "node ./server/bin/www",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "heroku": "npm run build-client && npm run cp-client && npm run push-heroku",
+    "build-client": "cd client && npm run build",
+    "cp-client": "rm -rf ./server/public/* && cp -r ./client/build/* ./server/public/",
+    "push-heroku": "git commit -m \"deploy to heroku\" && git push heroku master"
   },
   "repository": {
     "type": "git",

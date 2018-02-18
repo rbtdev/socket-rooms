@@ -1,10 +1,14 @@
-.room-list {
+.chat {
+    font-size: 12px;
 }
 
+.room-list {}
+
 .room-list-title {
+    font-size: 12px;
     font-weight: bold;
     border-bottom: 1px solid gray;
-    margin-top: 20px;
+    margin-top: 10px;
     margin-bottom: 10px;
     text-align: center;
 }
@@ -37,12 +41,21 @@
 }
 
 .room-title {
+    width: 100%;
+    text-align: left;
+    text-transform: uppercase;
+}
 
+.room-title::before {
+    text-transform: none;
+    content: "You're in "
 }
 .message-list {
     padding: 10px;
 }
+
 .side-bar {
+    font-size: 10px;
     float: left;
     height: 600px;
     border-right: 1px solid gray;
@@ -52,15 +65,8 @@
     padding: 10px;
 }
 .member-list {
-    
-}
-
-.member-list-title {
-    font-weight: bold;
-    border-bottom: 1px solid gray;
-    margin-top: 20px;
-    margin-bottom: 10px;
-    text-align: center;
+    padding-left: 30px;
+    font-size: 10px;
 }
 
 .input-box {

@@ -66,6 +66,7 @@ class Room extends Component {
     render() {
         return (
             <div>
+                <div className = 'room-title'>{this.props.name}</div>
                 {this.renderMessages()}
             </div>)
     }
@@ -75,12 +76,8 @@ class Rooms extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            rooms: [{
-                name: 'general',
-                members: [],
-                messages: []
-            }],
-            activeRoom: 'general'
+            rooms: [],
+            activeRoom: ''
         }
         this.username = props.username;
         this.socket = io('/chat');
@@ -160,24 +157,38 @@ class Rooms extends Component {
     }
 
     renderActiveRoom() {
-        let room = this.state.rooms.find(_room => {
-            return (_room.name === this.state.activeRoom);
-        });
+        let activeRoom = <div></div>
+        if (this.state.activeRoom) {
+            let room = this.state.rooms.find(_room => {
+                return (_room.name === this.state.activeRoom);
+            });
+            activeRoom =
+                <div>
+                    <Room username={this.username} name={room.name} messages={room.messages} members={room.members} />
+                </div>
+        }
 
-        return (
-            <div>
-                <Room username={this.username} name={room.name} messages={room.messages} members={room.members} />
-            </div>
 
-        )
+        return activeRoom;
     }
 
     renderRoomNames() {
         let _this = this;
         let roomNames = _this.state.rooms.map((room, index) => {
             let nameClass = 'room-name';
-            if (_this.state.activeRoom === room.name) nameClass += ' active';
-            return (<div className={nameClass} onClick={this.setActiveRoom.bind(this)}>{room.name}</div>);
+            let memberList = <div></div>
+            if (_this.state.activeRoom === room.name) {
+                nameClass += ' active';
+                memberList = this.renderRoomMemberNames()
+            }
+            return (
+                <div>
+                    <div className={nameClass} onClick={this.setActiveRoom.bind(this)}>{room.name}</div>
+                    <div>
+                        {memberList}
+                    </div>
+                </div>
+            );
         });
 
         return (
@@ -189,7 +200,7 @@ class Rooms extends Component {
     }
 
 
-    renderMemberNames() {
+    renderRoomMemberNames() {
         let _this = this;
         let activeRoom = _this.state.rooms.find(_room => {
             return (_room.name === _this.state.activeRoom)
@@ -199,7 +210,6 @@ class Rooms extends Component {
         });
         return (
             <div className='member-list'>
-                <div className='member-list-title'>All Users</div>
                 {members}
             </div>
         )
@@ -210,7 +220,6 @@ class Rooms extends Component {
             <div className='chat'>
                 <div className='side-bar'>
                     {this.renderRoomNames()}
-                    {this.renderMemberNames()}
                 </div>
                 <div className='room'>
                     {this.renderActiveRoom()}

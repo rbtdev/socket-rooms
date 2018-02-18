@@ -32,7 +32,7 @@ class Chat extends Connection {
             this.authenticate(credentials, (err, user) => {
                 if (err || !user) return socket.emit('signin', null);
                 _this.clients[socket.id].username = user.username;
-                socket.emit('signin', user);
+                socket.emit('welcome', user);
                 socket.on('list-rooms', _this.listRooms.bind(this, socket));
                 socket.on('list-members', this.listMembers.bind(this, socket));
                 socket.on('list-messages', this.listMessages.bind(this, socket))
@@ -114,7 +114,7 @@ class Chat extends Connection {
 
     newMessage(socket, data) {
         if (socket.rooms[data.room]) {
-            this.rooms.room(data.room).emit('message', {
+            this.rooms.room(data.room).emit('new-message', {
                 timestamp: new Date().getTime(),
                 message: data.message,
                 sender: this.clients[socket.id].username

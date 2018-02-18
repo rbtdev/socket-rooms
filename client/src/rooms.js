@@ -79,7 +79,7 @@ class Rooms extends Component {
             rooms: [],
             activeRoom: ''
         }
-        
+
         this.credentials = {
             username: props.username,
             password: props.password
@@ -89,8 +89,8 @@ class Rooms extends Component {
         this.socket = io('/chat');
         this.socket.on('connect', () => {
             this.socket.emit('signin', this.credentials);
-            this.socket.on('signin', this.setUser.bind(this))
-            this.socket.on('message', this.newMessage.bind(this));
+            this.socket.on('welcome', this.setUser.bind(this))
+            this.socket.on('new-message', this.newMessage.bind(this));
             this.socket.on('room-list', this.setRooms.bind(this));
             this.socket.on('message-list', this.setMessages.bind(this));
             this.socket.on('member-list', this.setMembers.bind(this));
@@ -114,7 +114,6 @@ class Rooms extends Component {
                 unauthorized: true
             })
         }
-        this.socket.emit('list-rooms');
     }
 
     setRooms(roomList) {

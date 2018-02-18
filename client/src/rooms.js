@@ -43,14 +43,14 @@ class Room extends Component {
     renderMessages() {
         let messages = this.state.messages.map((message, index) => {
             let messageClass = 'message';
-            if (message.data.sender === this.username) messageClass += ' owner';
+            if (message.sender === this.username) messageClass += ' owner';
             return (
                 <div className={messageClass} key={index}>
                     <div className='message-sender'>
-                        {message.data.sender}
+                        {message.sender}
                     </div>
                     <div className='message-content'>
-                        {message.data.message}
+                        {message.message}
                     </div>
                 </div>
             )

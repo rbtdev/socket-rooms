@@ -7,6 +7,7 @@ class Chat extends Connection {
     constructor(nsp, connectionName) {
         super(nsp, connectionName);
         this.rooms = new Rooms(this.nsp);
+        this.messages = [];
         this.defaultRoom = 'general';
         this.defaultRooms = [this.defaultRoom, 'software', 'react', 'ingress', 'dev-ops']
         this.rooms.add(this.defaultRooms);
@@ -33,11 +34,11 @@ class Chat extends Connection {
                 if (err || !user) return socket.emit('signin', null);
                 _this.clients[socket.id].username = user.username;
                 socket.emit('welcome', user);
-                socket.on('list-rooms', _this.listRooms.bind(this, socket));
-                socket.on('list-members', this.listMembers.bind(this, socket));
-                socket.on('list-messages', this.listMessages.bind(this, socket))
+                socket.on('list-rooms', _this.listRooms.bind(_this, socket));
+                socket.on('list-members', _this.listMembers.bind(_this, socket));
+                socket.on('list-messages', _this.listMessages.bind(_this, socket))
                 socket.on('message', _this.newMessage.bind(_this, socket));
-                socket.on('join-room', this.joinRoom.bind(_this, socket));
+                socket.on('join-room', _this.joinRoom.bind(_this, socket));
             });
         });
 
@@ -100,29 +101,55 @@ class Chat extends Connection {
         }
     }
 
-    listMessages(socket, roomName) {
-        let room = this.rooms.room(roomName);
-        if (room) {
+    listMessages(socket, room) {
+        this.getRoomMessages(room, (err, messages) => {
+            if (err) console.log("Error getting room messages " + JSON.stringify(err));
             socket.emit('message-list', {
-                room: roomName,
-                messages: room.messages
+                room: room,
+                messages: messages
             })
-        } else {
-            // send error ?
-        }
+        });
     }
 
     newMessage(socket, data) {
-        if (socket.rooms[data.room]) {
-            this.rooms.room(data.room).emit('new-message', {
-                timestamp: new Date().getTime(),
+        let room = this.rooms.room(data.room);
+        if (room) {
+            let message = {
                 message: data.message,
                 sender: this.clients[socket.id].username
-            });
+            }
+            this.saveMessage(data.room, message, (err, message) => {
+                if (err) return console.log ('error saving message ' + JSON.stringify(err));
+                room.emit('new-message', message);
+            })
         } else {
             console.log('invalid room ' + data.room);
             // socket is not in the room in the message, ignore
         }
+    }
+
+    // this will save the message in a db and send the saved message with
+    // an id and timestamp back to the callback
+    saveMessage (room, message, cb) {
+        let _this = this;
+        setTimeout(() => {
+            message.timestamp = new Date().getTime();
+            message.id = this.messages.length;
+            message.room = room;
+            this.messages.push(message);
+            cb(null, message)
+        }, 100);
+    }
+
+    // this will retrieve messages from the db given a room name
+    getRoomMessages(room, cb) {
+        let _this = this;
+        setTimeout(() => {
+            let messages = _this.messages.filter(message => {
+                return message.room === room;
+            })
+            cb (null, messages);
+        }, 100)
     }
 }
 

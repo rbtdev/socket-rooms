@@ -5,7 +5,6 @@ class Room {
     constructor(nsp, name) {
         this.nsp = nsp;
         this.name = name
-        this.messages = [];
         this.room = this.nsp.to(this.name);
     }
 
@@ -39,25 +38,16 @@ class Room {
         });
     }
 
-    emit(event, data) {
-        let message = {
-            data: data,
-            room: this.name
-        };
-        if (event === 'message') this.messages.push(message);
+    emit(event, message) {
+        let data = {
+            room: this.name,
+            message: message
+        }
         this.room.emit(event, message);
     }
 
     members() {
         return Object.keys(this.room.sockets);
-    }
-
-    get messages() {
-        return this._messages;
-    }
-
-    set messages(value) {
-        this._messages = value;
     }
 }
 
@@ -86,9 +76,7 @@ class Rooms {
     list() {
         return this.rooms.map((room) => {
             return {
-                name: room.name,
-                members: room.members(),
-                messages: room.messages
+                name: room.name
             };
         })
     }

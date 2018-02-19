@@ -10,10 +10,21 @@ class Room extends Component {
         this.members = props.members;
         this.messages = props.messages;
         this.state = {
+            width: window.innerWidth,
+            height: window.innerHeight,
             messages: this.messages,
             members: this.members
         }
     }
+
+
+    /**
+ * Calculate & Update state of new dimensions
+ */
+    updateDimensions() {
+        this.setState({ width: window.innerWidth, height: window.innerHeight });
+    }
+
     componentWillReceiveProps(nextProps) {
         this.setState({
             messages: nextProps.messages,
@@ -34,12 +45,20 @@ class Room extends Component {
     }
 
     componentDidMount() {
+        this.updateDimensions();
+        window.addEventListener("resize", this.updateDimensions.bind(this));
         this.scrollToBottom();
     }
 
     componentDidUpdate() {
         this.scrollToBottom();
     }
+
+
+    componentWillUnmount() {
+        window.removeEventListener("resize", this.updateDimensions.bind(this));
+    }
+
     renderMessages() {
         let messages = this.state.messages.map((message, index) => {
             let messageClass = 'message';
@@ -64,8 +83,11 @@ class Room extends Component {
     }
 
     render() {
+        let height = {
+            height: this.state.height - 60
+        }
         return (
-            <div>
+            <div className='room' style = {height} >
                 <div className='room-title'>{this.props.name}</div>
                 {this.renderMessages()}
             </div>)
@@ -152,11 +174,11 @@ class Rooms extends Component {
         }
     }
 
-    joinedRoom (data) {
+    joinedRoom(data) {
         this.socket.emit('list-members', data.room);
     }
 
-    leftRoom (data) {
+    leftRoom(data) {
         this.socket.emit('list-members', data.room);
     }
 
@@ -264,12 +286,12 @@ class Rooms extends Component {
                 <div className='side-bar'>
                     {this.renderRoomNames()}
                 </div>
-                <div className='room'>
+                <div>
                     {this.renderActiveRoom()}
                 </div>
                 <div className='input-box'>
                     <input className='input' type='text'
-                        placeholder = {this.state.activeRoom?'Send a message...':'Select a room to send to...'}
+                        placeholder={this.state.activeRoom ? 'Send a message...' : 'Select a room to send to...'}
                         onKeyPress={this.inputKeyPress.bind(this)}
                         onChange={this.inputChange.bind(this)}
                         value={this.state.inputMessage}></input>

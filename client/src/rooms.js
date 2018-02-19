@@ -195,7 +195,8 @@ class Rooms extends Component {
         this.socket.emit('list-members', room);
         this.socket.emit('list-messages', room);
         this.setState({
-            activeRoom: room
+            activeRoom: room,
+            sidebarState: 'closed'
         })
     }
     sendMessage() {
@@ -222,6 +223,11 @@ class Rooms extends Component {
         })
     }
 
+    sidebarClick() {
+        this.setState({
+            sidebarState: 'open'
+        })
+    }
     renderActiveRoom() {
         let activeRoom = <div></div>
         if (this.state.activeRoom) {
@@ -283,13 +289,17 @@ class Rooms extends Component {
     render() {
         return (
             <div className='chat'>
-                <div className='side-bar'>
+                <div className = 'top-menu'>
+                    <div className = 'room-button'></div>s
+                    <div className = 'username'>{this.username}</div>
+                </div>
+                <div className={'side-bar ' + this.state.sidebarState} onClick = {this.sideBarClick}>
                     {this.renderRoomNames()}
                 </div>
                 <div>
                     {this.renderActiveRoom()}
                 </div>
-                <div className='input-box'>
+                <div className={'input-box ' + this.state.sidebarState}>
                     <input className='input' type='text'
                         placeholder={this.state.activeRoom ? 'Send a message...' : 'Select a room to send to...'}
                         onKeyPress={this.inputKeyPress.bind(this)}

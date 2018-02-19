@@ -1,7 +1,33 @@
 .chat {
     font-size: 12px;
+    text-align: left;
+    position: fixed;
+    top: 0px;
+    width: 100%;
 }
 
+.top-menu {
+    padding: 15px;
+    position: fixed;
+    height: 40px;
+    width: 100%;
+    background-color: darkslategrey;
+    color: white;
+}
+.room-button {
+    display: inline-block;
+    margin-left: 20px;
+    width: 30px;
+    height: 30px;
+}
+.room-button::before {
+    content: '>';
+}
+.username {
+    display: inline-block;
+    width: 200px
+    
+}
 .room-list {}
 
 .room-list-title {
@@ -15,23 +41,20 @@
     text-align: left;
     font-weight: bold;
     text-transform: uppercase;
-    width: 100px;
+    width: 100%;
     padding: 10px;
 }
 .room-name.active {
-    background-color: #dddddd;
-}
-
-.chat {
-    text-align: left;
+    background-color: #bebebe;
+    color: black;
 }
 
 .room {
+    margin-top: 41px;
     text-align: left;
     overflow-y: auto;
-    margin-left: 151px;
+    margin-left: 11px;
 }
-
 
 .room-title {
     width: 100%;
@@ -49,13 +72,27 @@
 
 
 .side-bar {
+    color: white;
     position:fixed;
     top: 0px;
     bottom: 0px;
-    width: 150px;
     text-align: left;
     font-size: 10px;
     border-right: 1px solid gray;
+    background-color: darkslategrey;
+    overflow: hidden;
+}
+.side-bar {
+    width: 100px;
+}
+.side-bar.open {
+    width: 100px;
+}
+.side-bar.closed {
+    width: 10px;
+}
+.side-bar.closed:hover {
+    width: 100px;
 }
 .member-list {
     padding-left: 30px;
@@ -65,7 +102,7 @@
 .input-box {
     position:fixed;
     bottom: 0px;
-    left: 160px;
+    left: 15px;
     right: 0px;
     padding: 5px;
     height: 50px;
@@ -73,7 +110,6 @@
 
 .input-box .input {
     padding: 5px;
-
 }
 
 .input-box .send {

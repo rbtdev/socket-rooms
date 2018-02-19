@@ -237,7 +237,6 @@ class Rooms extends Component {
 
         return (
             <div className='room-list'>
-                <div className='room-list-title'>Rooms</div>
                 {roomNames}
             </div>
         )
@@ -270,10 +269,10 @@ class Rooms extends Component {
                 </div>
                 <div className='input-box'>
                     <input className='input' type='text'
+                        placeholder = {this.state.activeRoom?'Send a message...':'Select a room to send to...'}
                         onKeyPress={this.inputKeyPress.bind(this)}
                         onChange={this.inputChange.bind(this)}
                         value={this.state.inputMessage}></input>
-                    <button className='send' onClick={this.sendMessage.bind(this)}>Send</button>
                 </div>
             </div>
         )

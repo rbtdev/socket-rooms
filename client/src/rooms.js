@@ -84,7 +84,7 @@ class Room extends Component {
 
     render() {
         let height = {
-            height: this.state.height - 60
+            height: this.state.height - 80
         }
         return (
             <div className='room' style = {height} >
@@ -290,10 +290,10 @@ class Rooms extends Component {
         return (
             <div className='chat'>
                 <div className = 'top-menu'>
-                    <div className = 'room-button'></div>s
                     <div className = 'username'>{this.username}</div>
                 </div>
                 <div className={'side-bar ' + this.state.sidebarState} onClick = {this.sideBarClick}>
+                    <div className = 'room-button'></div>
                     {this.renderRoomNames()}
                 </div>
                 <div>

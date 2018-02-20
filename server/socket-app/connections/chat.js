@@ -32,13 +32,17 @@ class Chat extends Connection {
         socket.on('signin', (credentials) => {
             this.authenticate(credentials, (err, user) => {
                 if (err || !user) return socket.emit('signin', null);
-                _this.clients[socket.id].username = user.username;
+                _this.clients[socket.id] = {
+                    username: user.username,
+                    socket: socket
+                };
                 socket.emit('welcome', user);
                 socket.on('list-rooms', _this.listRooms.bind(_this, socket));
                 socket.on('list-members', _this.listMembers.bind(_this, socket));
                 socket.on('list-messages', _this.listMessages.bind(_this, socket))
                 socket.on('message', _this.newMessage.bind(_this, socket));
                 socket.on('join-room', _this.joinRoom.bind(_this, socket));
+                socket.on('add-room', _this.addRoom.bind(_this, socket));
             });
         });
 
@@ -63,6 +67,32 @@ class Chat extends Connection {
 
     roomList() {
         return this.rooms.list().map(room => { return room.name })
+    }
+
+    addRoom (socket, roomName, mode, cb) {
+        let _this = this;
+        mode = mode || 'public';
+        let room = this.rooms.room(roomName)
+        if (room) {
+            cb ('Room already exists');
+        } else {
+            room = this.rooms.add(roomName, mode);
+            if (!room) return cb('Error creating room');
+            else {
+                if (mode === 'private') {
+                    let sender = socket;
+                    let recipientId = Object.keys(_this.clients).find((socketId) => {
+                        return _this.clients[socketId].username === roomName
+                    });
+                    let recipient = _this.clients[recipientId].socket;
+                    _this.listRooms(sender, 'all');
+                    _this.listRooms(recipient, 'all');
+                    _this.joinRoom(sender, roomName);
+                    _this.joinRoom(recipient, roomName);
+                }
+                cb ();
+            }
+        }
     }
 
     joinRoom(socket, roomName) {

@@ -17,10 +17,6 @@ class Room extends Component {
         }
     }
 
-
-    /**
- * Calculate & Update state of new dimensions
- */
     updateDimensions() {
         this.setState({ width: window.innerWidth, height: window.innerHeight });
     }
@@ -65,6 +61,9 @@ class Room extends Component {
             if (message.sender === this.username) messageClass += ' owner';
             return (
                 <div className={messageClass} key={index}>
+                    <div className='message-timestamp'>
+                        {message.timestamp}
+                    </div>
                     <div className='message-sender'>
                         {message.sender}
                     </div>
@@ -87,7 +86,7 @@ class Room extends Component {
             height: this.state.height - 80
         }
         return (
-            <div className='room' style = {height} >
+            <div className='room' style={height} >
                 <div className='room-title'>{this.props.name}</div>
                 {this.renderMessages()}
             </div>)
@@ -138,19 +137,29 @@ class Rooms extends Component {
         }
     }
 
+    addRoom(roomName, mode) {
+        let _this = this;
+        this.socket.emit('add-room', roomName, mode, (err) => {
+        });
+    }
+
+    joinRoom(roomName) {
+        this.socket.emit('join-room', roomName);
+    }
+
     setRooms(roomList) {
+        let _this = this;
         let rooms = roomList.map((roomName) => {
-            return {
+            let room = {
                 name: roomName,
-                messages: [],
-                members: []
+                members: [],
+                messages: []
             }
-        })
+            _this.joinRoom(roomName);
+            return room;
+        });
         this.setState({
             rooms: rooms
-        })
-        roomList.forEach((roomName) => {
-            this.socket.emit('join-room', roomName);
         })
     }
 
@@ -199,6 +208,7 @@ class Rooms extends Component {
             sidebarState: 'closed'
         })
     }
+
     sendMessage() {
         if (this.state.inputMessage) {
             this.socket.emit('message', {
@@ -228,20 +238,12 @@ class Rooms extends Component {
             sidebarState: 'open'
         })
     }
-    renderActiveRoom() {
-        let activeRoom = <div></div>
-        if (this.state.activeRoom) {
-            let room = this.state.rooms.find(_room => {
-                return (_room.name === this.state.activeRoom);
-            });
-            activeRoom =
-                <div>
-                    <Room username={this.username} name={room.name} messages={room.messages} members={room.members} />
-                </div>
-        }
 
-
-        return activeRoom;
+    memberNameClick(e) {
+        debugger
+        let target = e.target;
+        let username = target.textContent;
+        this.addRoom(username, 'private');
     }
 
     renderRoomNames() {
@@ -277,7 +279,12 @@ class Rooms extends Component {
             return (_room.name === _this.state.activeRoom)
         })
         let members = activeRoom.members.map((member, index) => {
-            return (<div className='member-name'>{member.username}</div>);
+            return (
+                <div className='member-name'
+                    onClick={this.memberNameClick.bind(this)}>
+                    {member.username}
+                </div>
+            );
         });
         return (
             <div className='member-list'>
@@ -286,26 +293,58 @@ class Rooms extends Component {
         )
     }
 
+    renderActiveRoom() {
+        let activeRoom = <div></div>
+        if (this.state.activeRoom) {
+            let room = this.state.rooms.find(_room => {
+                return (_room.name === this.state.activeRoom);
+            });
+            activeRoom =
+                <div>
+                    <Room username={this.username} name={room.name} messages={room.messages} members={room.members} />
+                </div>
+        }
+
+
+        return activeRoom;
+    }
+
+    renderSidebar() {
+        return (
+            <div className={'side-bar ' + this.state.sidebarState} onClick={this.sideBarClick}>
+                <div className='room-button'></div>
+                {this.renderRoomNames()}
+            </div>
+        )
+    }
+
+    renderTopbar() {
+        return (
+            <div className='top-menu'>
+                <div className='username'>{this.username}</div>
+            </div>
+        )
+    }
+
+    renderMessageInput() {
+        return (
+            <div className='input-box'>
+                <input className='input' type='text'
+                    placeholder={this.state.activeRoom ? 'Send a message...' : 'Select a room to send to...'}
+                    onKeyPress={this.inputKeyPress.bind(this)}
+                    onChange={this.inputChange.bind(this)}
+                    value={this.state.inputMessage}></input>
+            </div>
+        )
+    }
+
     render() {
         return (
             <div className='chat'>
-                <div className = 'top-menu'>
-                    <div className = 'username'>{this.username}</div>
-                </div>
-                <div className={'side-bar ' + this.state.sidebarState} onClick = {this.sideBarClick}>
-                    <div className = 'room-button'></div>
-                    {this.renderRoomNames()}
-                </div>
-                <div>
-                    {this.renderActiveRoom()}
-                </div>
-                <div className={'input-box ' + this.state.sidebarState}>
-                    <input className='input' type='text'
-                        placeholder={this.state.activeRoom ? 'Send a message...' : 'Select a room to send to...'}
-                        onKeyPress={this.inputKeyPress.bind(this)}
-                        onChange={this.inputChange.bind(this)}
-                        value={this.state.inputMessage}></input>
-                </div>
+                {this.renderTopbar()}
+                {this.renderSidebar()}
+                {this.renderActiveRoom()}
+                {this.renderMessageInput()}
             </div>
         )
     }

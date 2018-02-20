@@ -2,9 +2,10 @@
 const async = require('async');
 
 class Room {
-    constructor(nsp, name) {
+    constructor(nsp, name, mode) {
         this.nsp = nsp;
-        this.name = name
+        this.name = name;
+        this.mode = mode;
         this.room = this.nsp.to(this.name);
     }
 
@@ -58,11 +59,11 @@ class Rooms {
         this.joined = {};
     }
 
-    add(nameList) {
+    add(nameList, mode) {
         let names = [].concat(nameList);
         let result = [];
         names.forEach((name) => {
-            result.push(new Room(this.nsp, name));
+            result.push(new Room(this.nsp, name, mode));
         })
         this.rooms = this.rooms.concat(result);
         return result.length > 1 ? result : result[0];
@@ -82,12 +83,14 @@ class Rooms {
     }
 
     join(socket, roomName, cb) {
-        let room = this.room(roomName) || this.add(roomName);
-        this.joined[socket.id] = this.joined[socket.id] || {};
-        this.joined[socket.id][roomName] = room;
-        room.join(socket, () => {
-            cb (room)
-        });
+        let room = this.room(roomName)
+        if (room) {
+            this.joined[socket.id] = this.joined[socket.id] || {};
+            this.joined[socket.id][roomName] = room;
+            room.join(socket, () => {
+                cb(room)
+            });
+        };
     }
 
     leave(socket, roomName, cb) {
